@@ -1,20 +1,14 @@
-const express = require('express');
-
+const express = require('express')
+const connectDB = require("./config/database")
 const app =express();
 
-app.get("/user", (req,res)=>{
-    res.send({firstname: "Bhavya"});
-})
-
-app.post("/user",(req,res)=> {
-    res.send("Data saved to the database succesfully!")
-})
-
-app.use("/test",(req,res) => {
-    res.send("Hello from the server!");
-});
-
-
-app.listen(3000, ()=>{
+connectDB()
+.then(() => {
+    console.log("Database connection successful.");
+    app.listen(7777, ()=>{
     console.log("Server is successfully up and running.")
-});
+    });
+})
+.catch(err => {
+    console.error("Database cannot be connected.")
+})
