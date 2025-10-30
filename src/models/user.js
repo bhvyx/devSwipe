@@ -1,25 +1,62 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const validator = require("validator");
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
     firstName: {
-        type: String
+      type: String,
+      required: true,
+      minLength: 2,
+      maxLength: 50,
     },
     lastName: {
-        type: String
+      type: String,
     },
     emailId: {
-        type: String
+      type: String,
+      lowercase: true,
+      required: true,
+      unique: true,
+      trim: true,
     },
     password: {
-        type: String
+      type: String,
+      required: true,
     },
     age: {
-        type: Number
+      type: Number,
+      min: 18,
     },
     gender: {
-        type: String
-    }
-})
+      type: String,
+      validate(value) {
+        if (!["male", "female", "others"].includes(value)) {
+          throw new Error("Gender data is not valid.");
+        }
+      },
+    },
+    photoUrl: {
+      type: String,
+      default:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzCW8ayM9K_iNzX81NSjgpGcl30jDvsTSiIg&s",
+      validate(value) {
+        if (!validator.isURL(value)) {
+          throw new Error("Invalid photoURL." + value);
+        }
+      },
+    },
+    about: {
+      type: String,
+      default: "This is the default about of the user.",
+    },
+    skills: {
+      type: [String],
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 const User = mongoose.model("User", userSchema);
-module.exports = User; 
+module.exports = User;
