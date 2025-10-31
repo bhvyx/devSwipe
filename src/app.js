@@ -4,21 +4,20 @@ const app = express();
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
-const e = require("express");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth");
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   try {
-    //validation of data should be the first step
     validateSignUpData(req);
-    //we should not do everything in our api, we should use helper functions
-    //Encrypt the password (step 2)
     const { firstName, lastName, emailId, password } = req.body;
     const passwordHash = await bcrypt.hash(password, 10);
     console.log(passwordHash);
 
-    //creating a new instance of User model (step 3)
     const user = new User({
       firstName,
       lastName,
@@ -43,8 +42,15 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("Invalid Credentials.");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.validatePassword(password);
     if (isPasswordValid) {
+      const token = await user.getJWT();
+
+      console.log(token);
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
       res.send("Login Successful");
     } else {
       throw new Error("Invalid Credentials.");
@@ -54,7 +60,23 @@ app.post("/login", async (req, res) => {
   }
 });
 
-//GET user by email
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    console.log("Logged In user is: " + user.firstName + " " + user.lastName);
+    res.send(user);
+  } catch (error) {
+    res.status(400).send("ERROR: " + error.message);
+  }
+});
+
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  const user = req.user;
+  console.log("Sending a connection request");
+
+  res.send(user.firstName + " sent a connection request.");
+});
+
 app.get("/user", async (req, res) => {
   const userEmail = req.body.emailId;
   try {
@@ -69,7 +91,6 @@ app.get("/user", async (req, res) => {
   }
 });
 
-//feed api which gets all the users from the database - GET /feed
 app.get("/feed", async (req, res) => {
   try {
     const users = await User.find({});
