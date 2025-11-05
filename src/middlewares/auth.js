@@ -5,7 +5,7 @@ const userAuth = async (req, res, next) => {
   try {
     const { token } = req.cookies;
     if (!token) {
-      throw new Error("Invalid token");
+      return res.status(401).send("Please login");
     }
 
     const decodedObj = await jwt.verify(token, "DEV@Swipe$23");
@@ -20,7 +20,7 @@ const userAuth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    res.status(400).send("ERROR: " + error.message);
+    res.status(401).send("ERROR: " + error.message);
   }
 };
 

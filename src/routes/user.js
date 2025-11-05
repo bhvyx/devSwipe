@@ -16,10 +16,6 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
       status: "interested",
     }).populate("fromUserId", USER_SAFE_DATA);
 
-    if (connectionRequest.length == 0) {
-      throw new Error("No connection requests found.");
-    }
-
     res.json({ message: "Connection Requests", data: connectionRequest });
   } catch (error) {
     res.status(400).send("ERROR: " + error.message);
@@ -80,7 +76,9 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    res.send(users);
+    res.json({
+      data: users,
+    });
   } catch (error) {
     res.status(400).send("ERROR: " + error.message);
   }
